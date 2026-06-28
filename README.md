@@ -24,6 +24,8 @@ It started as a Kiro-CLI-specific design ([solution.md](./solution.md),
 | [design-v2.md](./design-v2.md) | The architecture: three layers, capability matrix, model selection, migration plan |
 | [protocol.md](./protocol.md) | The portable L1 spec — behavior & contracts only (RFC-2119) |
 | [config.json](./config.json) | All tunables — loop caps, models, budget, stack-specific commands |
+| [orchestrator-guide.md](./orchestrator-guide.md) | **Step-by-step: how to create the orchestrator agent** on each CLI |
+| [prompts/orchestrator.md](./prompts/orchestrator.md) | The portable orchestrator system prompt (one block customized per CLI) |
 | [solution.md](./solution.md) | **v1** — the original Kiro-specific design + implementation learnings |
 | [task-breakdown.md](./task-breakdown.md) | **v1** — task-by-task implementation plan |
 
@@ -123,6 +125,10 @@ agents converge* — with explicit exits when they can't.
 All three share the same flow: pick the CLI in [config.json](./config.json), create a
 feature worktree, then launch the orchestrator with a natural-language feature description.
 The orchestrator drives everything else.
+
+> **Building the orchestrator agent itself?** Follow the
+> [step-by-step orchestrator guide](./orchestrator-guide.md) — it walks through the system
+> prompt, the per-CLI agent definition, launch, and verification.
 
 ```jsonc
 // config.json
