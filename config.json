@@ -1,0 +1,86 @@
+{
+  "$schema": "./config.schema.json",
+  "_comment": "L2 driver configuration. The protocol (protocol.md) references these by key. Adapters and driver scripts read this file; nothing here is CLI-specific.",
+
+  "cli": "claude",
+  "_cli_options": ["kiro", "claude", "copilot"],
+
+  "feature": {
+    "worktreeRoot": "../worktrees",
+    "branchPrefix": "agent-feature",
+    "stateDir": ".orchestrator/state",
+    "resourcesDir": ".orchestrator/resources"
+  },
+
+  "loops": {
+    "dev_review": { "maxIterations": 3, "onCap": "escalate" },
+    "dev_test":   { "maxIterations": 3, "onCap": "escalate" }
+  },
+
+  "severity": {
+    "MINOR":    { "action": "log_continue" },
+    "MAJOR":    { "action": "loop_to_developer" },
+    "CRITICAL": { "action": "escalate_human" }
+  },
+
+  "deadlock": {
+    "enabled": true,
+    "fingerprintAlgo": "sha256",
+    "escalateOnRepeat": true
+  },
+
+  "milestones": {
+    "blocking":   ["DESIGN_COMPLETE", "CODE_COMPLETE", "TESTS_PASS"],
+    "nonBlocking": {
+      "IMPLEMENTATION_DRAFT": { "timeoutSeconds": 300, "onTimeout": "proceed" }
+    }
+  },
+
+  "budget": {
+    "maxInvocations": 30,
+    "onExhausted": "escalate_human"
+  },
+
+  "rollback": {
+    "checkpointBefore": ["developer"],
+    "mechanism": "git_stash",
+    "preserveWorktreeOnAbort": true
+  },
+
+  "models": {
+    "orchestrator": "claude-opus-4-8",
+    "architect":    "claude-opus-4-8",
+    "security":     "claude-opus-4-8",
+    "developer":    "claude-sonnet-4-6",
+    "qc":           "claude-haiku-4-5-20251001",
+    "tester":       "claude-haiku-4-5-20251001",
+    "analyst":      "claude-haiku-4-5-20251001"
+  },
+
+  "thinking": {
+    "extendedFor": ["orchestrator", "architect", "security"]
+  },
+
+  "research": {
+    "_comment": "On CLIs where subagents have web tools, set inlineWebTools true and the role gets WebSearch directly. On Kiro, set false and the orchestrator performs research.",
+    "inlineWebTools": true,
+    "rolesWithWeb": ["architect", "security", "tester"],
+    "maxReactiveRounds": 1
+  },
+
+  "stack": {
+    "_comment": "The only language/build-specific block. Swap this to retarget the pipeline at another ecosystem.",
+    "language": "java",
+    "build": "maven",
+    "allowedCommands": {
+      "developer": ["mvn compile", "mvn test-compile"],
+      "qc":        ["mvn checkstyle:check", "mvn pmd:check"],
+      "security":  ["mvn dependency-check:check"],
+      "tester":    ["mvn test", "mvn verify"]
+    },
+    "writePaths": {
+      "developer": ["src/main/java/**/*.java", "src/main/**/*.xml"],
+      "tester":    ["**/src/test/**/*.java"]
+    }
+  }
+}
