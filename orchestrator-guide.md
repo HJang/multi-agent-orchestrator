@@ -12,9 +12,11 @@ You need three things, in order:
    tools, sets the model, and lists which subagents it may spawn.
 3. **The launch command.**
 
-> Prerequisite: a state directory exists with `workflow-state.json` (and the role-output
-> files seeded as empty templates). See [protocol.md §3](./protocol.md) for the schemas.
-> Throughout, `state/` = `config.feature.stateDir`.
+> Prerequisite: just a git repo and `config.json`. The orchestrator creates the feature
+> worktree and seeds the state directory itself as its first step ([protocol.md §5.0](./protocol.md)) —
+> there is no `create-feature-worktree.sh` and you do not pre-create `state/`. You only need
+> templates for the state files available for it to copy. Throughout, `state/` =
+> `config.feature.stateDir` (relative to the worktree).
 
 ---
 
@@ -167,8 +169,10 @@ copilot --agent orchestrator --prompt "Add per-tenant API rate limiting"
 kiro-cli chat --agent orchestrator "Add per-tenant API rate limiting"
 ```
 
-The orchestrator will spawn `analyst` first, present requirements for your approval, then
-drive design → draft → review → tests, pausing only at the milestone gates.
+Launch from the **repo root**. The orchestrator's first action is to create the feature
+worktree itself (`git worktree add …`) and seed `state/` inside it; then it spawns `analyst`,
+presents requirements for your approval, and drives design → draft → review → tests, pausing
+only at the milestone gates.
 
 ---
 
@@ -177,6 +181,10 @@ drive design → draft → review → tests, pausing only at the milestone gates
 Quick checks before trusting a full run:
 
 - [ ] The agent loads without config errors and prints its role.
+- [ ] On launch it **creates a worktree** under `config.feature.worktreeRoot` and records
+      `worktreePath`/`branch` in `workflow-state.json` (`git worktree list` shows it). If it
+      skips this, confirm the orchestrator has a shell tool (`Bash`/`shell`) and the SETUP
+      section is present in the prompt.
 - [ ] On a trivial request it **spawns `analyst`** rather than answering directly. If it
       starts implementing itself, the spawn block or the "HARD RULES" weren't applied — recheck
       Step 1.

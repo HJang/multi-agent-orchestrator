@@ -122,9 +122,9 @@ agents converge* — with explicit exits when they can't.
 
 ## Running it per CLI
 
-All three share the same flow: pick the CLI in [config.json](./config.json), create a
-feature worktree, then launch the orchestrator with a natural-language feature description.
-The orchestrator drives everything else.
+All three share the same flow: pick the CLI in [config.json](./config.json), then launch the
+orchestrator from the repo root with a natural-language feature description. The orchestrator
+creates its own feature worktree and drives everything else.
 
 > **Building the orchestrator agent itself?** Follow the
 > [step-by-step orchestrator guide](./orchestrator-guide.md) — it walks through the system
@@ -149,13 +149,10 @@ The orchestrator drives everything else.
   for the qc + security phase.
 - **Permissions:** `settings.json` `permissions.allow`/`deny` mirror `config.stack` write
   paths and allowed commands; a `PostToolUse` hook can auto-format edited files.
-- **Run:**
+- **Run:** (the orchestrator creates its own feature worktree as its first step — no setup script)
   ```bash
-  # 1. select CLI
   #    config.json -> "cli": "claude"
-  # 2. create an isolated worktree for the feature
-  ./scripts/create-feature-worktree.sh "add-rate-limiting"
-  # 3. launch the orchestrator (headless drives the loop; omit -p for interactive)
+  # launch from the repo root; headless drives the loop, omit -p for interactive
   claude -p "Add per-tenant API rate limiting" --agent orchestrator
   ```
 - **Notes:** no Kiro-style workarounds needed — web tools, Grep/Glob, and compaction are
@@ -169,14 +166,14 @@ The orchestrator drives everything else.
 - **Subagents:** each runs in its own context window; use **Fleet mode** for the parallel
   qc + security phase.
 - **Permissions:** tool list per agent; secrets/MCP via Agents secrets or repo/org config.
-- **Run:**
+- **Run:** (the orchestrator creates its own feature worktree as its first step — no setup script)
   ```bash
   #    config.json -> "cli": "copilot"
-  ./scripts/create-feature-worktree.sh "add-rate-limiting"
+  # launch from the repo root
   copilot --agent orchestrator --prompt "Add per-tenant API rate limiting"
   ```
-- **Notes:** hooks are thinner than Claude Code — lean on driver scripts + MCP for lifecycle
-  actions. Naming conflicts resolve user > repo > org > enterprise.
+- **Notes:** hooks are thinner than Claude Code — lean on MCP for lifecycle actions. Naming
+  conflicts resolve user > repo > org > enterprise.
 
 ### Kiro CLI  *(the original v1 implementation)*
 
@@ -187,10 +184,10 @@ The orchestrator drives everything else.
   `fallbackAction: "deny"`; `shell.autoApprove: true` on non-interactive subagents.
 - **Web research:** subagents can't web-search — the **orchestrator** performs research and
   writes `researcher-output.json` (set `config.research.inlineWebTools: false`).
-- **Run:**
+- **Run:** (the orchestrator creates its own feature worktree as its first step — no setup script)
   ```bash
   #    config.json -> "cli": "kiro"
-  ./scripts/create-feature-worktree.sh "add-rate-limiting"
+  # launch from the repo root; initial prompt is POSITIONAL (no --prompt flag)
   kiro-cli chat --agent orchestrator "Add per-tenant API rate limiting"
   ```
 - **Notes:** all of v1's learnings apply to this adapter and only this adapter. The initial
@@ -203,7 +200,8 @@ The orchestrator drives everything else.
 1. Choose a target CLI and set `config.cli`.
 2. Adjust `config.stack` for your language/build (defaults target Java + Maven).
 3. Review the loop caps, budget, and checkpoint timeout in `config.json`.
-4. Create a feature worktree and launch the orchestrator with your feature description.
+4. Launch the orchestrator from the repo root with your feature description — it creates the
+   feature worktree itself, then drives the pipeline.
 5. Respond at the milestone gates (design, code, tests); the orchestrator handles the loops,
    routing, and escalation in between.
 
