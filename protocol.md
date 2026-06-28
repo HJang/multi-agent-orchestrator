@@ -48,7 +48,9 @@ memory. This makes the bus CLI-independent and gives a complete audit trail.
 ```jsonc
 {
   "featureName": "string",
-  "currentMilestone": "INIT | DESIGN | DRAFT | CODE | TESTS | DONE",
+  "worktreePath": "string | null",        // set by the orchestrator at SETUP (§5.0)
+  "branch": "string | null",              // the worktree's branch
+  "currentMilestone": "SETUP | INIT | DESIGN | DRAFT | CODE | TESTS | DONE",
   "activeRole": "string | null",
   "signal": "none | pause | abort",       // written by the async signal driver, §9
   "iterations": { "dev_review": 0, "dev_test": 0 },
@@ -111,6 +113,9 @@ State machine driven by the orchestrator. Every transition is appended to
 `workflow-state.json.history`.
 
 ```
+SETUP
+  └─ orchestrator creates worktree itself (§5.0) ─▶ records worktreePath/branch ─▶ INIT
+
 INIT
   └─ spawn analyst ─▶ requirements.json
        └─ present to human ──(refine)──▶ re-spawn analyst
@@ -142,6 +147,24 @@ TESTS
 DONE
   └─ append learnings to resources, workflow complete
 ```
+
+### 5.0 SETUP — worktree creation (orchestrator, before INIT)
+
+The orchestrator MUST create the feature worktree **itself**, using its shell tool. No
+external setup script is required (the v1 `create-feature-worktree.sh` is obsolete).
+
+1. **Resume:** if `worktreePath` is already set and exists on disk, reuse it; skip to INIT.
+2. Otherwise create branch `<config.feature.branchPrefix>-<slug>-<timestamp>` and worktree at
+   `<config.feature.worktreeRoot>/<branch>` via `git worktree add -b <branch> <path>`.
+3. Inside the worktree, create `config.feature.stateDir` and `config.feature.resourcesDir` and
+   seed the state files (§3) from templates.
+4. Record `worktreePath`, `branch`, `featureName`; set `currentMilestone = INIT`.
+5. **All subsequent work happens inside the worktree.** The orchestrator operates with the
+   worktree as its working directory and MUST pass the absolute worktree path to every spawned
+   role; roles confine all file operations to it. Nothing writes to the original checkout.
+
+Worktree *cleanup* remains a manual/human action (`config.rollback.preserveWorktreeOnAbort`
+keeps it on abort); the orchestrator never deletes a worktree.
 
 ### 5.1 Pre-invocation checks (MUST run before every spawn)
 
@@ -251,6 +274,8 @@ Each adapter additionally provides:
 
 An adapter conforms iff:
 
+- [ ] Has the orchestrator create the feature worktree itself at SETUP (§5.0) and confine all
+      work to it — no external worktree-creation script.
 - [ ] Spawns each §4 role with its declared inputs, outputs, and authority.
 - [ ] Enforces scoped write paths and allowed commands from `config.stack`.
 - [ ] Runs qc and security in parallel and merges before routing.

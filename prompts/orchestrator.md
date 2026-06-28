@@ -78,6 +78,31 @@ When this prompt says "spawn `<role>`," use the mechanism above with that exact 
 
 Track `currentMilestone` in `state/workflow-state.json`. Move through these phases in order.
 
+### SETUP (your very first action — create the worktree yourself)
+
+You create the isolated git worktree directly with shell commands. **There is no external
+setup script.** Do this once, before INIT, then run everything else inside the worktree.
+
+1. **Resume check:** if `state/workflow-state.json` already has a `worktreePath` that exists
+   on disk, reuse it and skip to INIT (this is a resumed run).
+2. Otherwise derive a slug from the feature description and a timestamp, then:
+   - `branch = <config.feature.branchPrefix>-<slug>-<timestamp>`
+   - `path   = <config.feature.worktreeRoot>/<branch>`
+   - run `git worktree add -b <branch> <path>` from the repo root.
+3. Create `<path>/<config.feature.stateDir>` and `<path>/<config.feature.resourcesDir>`, and
+   seed the state files (`workflow-state.json` plus empty role-output templates) per
+   `protocol.md §3`.
+4. Record `worktreePath`, `branch`, and `featureName` in `workflow-state.json`, set
+   `currentMilestone = INIT`, and append a `history` entry.
+5. **From now on, the worktree is the working directory for the whole run.** Every shell
+   command, every state-file read/write, and every checkpoint happens inside `<path>`. When
+   you spawn a role, tell it the absolute worktree path and that all its file operations must
+   stay within it. Never write to the original repo checkout.
+
+> On abort you do **not** delete the worktree (`config.rollback.preserveWorktreeOnAbort`); you
+> leave it for the human to inspect or recover. Cleanup of a finished/abandoned worktree is a
+> manual step the human runs (`git worktree remove <path>`), not something you do.
+
 ### INIT → DESIGN
 1. Spawn `analyst` with the human's feature description.
 2. Read `state/requirements.json`. Shape-check it (required fields present, valid JSON). If

@@ -39,7 +39,7 @@ change to the core.
 | Layer | Portable? | What lives here |
 |-------|-----------|-----------------|
 | **L1 — Protocol** | ✅ fully | State schema, role contracts, severity tiers, loop semantics & caps, milestone gates, deadlock detection, escalation rules, budget guardrails. Pure spec — no CLI, no shell. → [protocol.md](./protocol.md) + [config.json](./config.json). |
-| **L2 — Driver** | ✅ mostly | Worktree lifecycle, signal/pause/abort, milestone & checkpoint scripts, the run loop. Calls into L3 through a single `agent_invoke` shim. |
+| **L2 — Driver** | ✅ mostly | Signal/pause/abort, milestone & checkpoint scripts, the run loop. Calls into L3 through a single `agent_invoke` shim. (Worktree *creation* is the orchestrator's own first step — see [protocol.md §5.0](./protocol.md); only manual worktree *cleanup* sits outside it.) |
 | **L3 — Adapter** | ❌ per-CLI | Agent definition file format, the "spawn a subagent" primitive, the invocation command, tool/permission mapping. One adapter per CLI. |
 
 ```
@@ -142,7 +142,7 @@ terms, and noting what to keep vs. retire:
 
 | Concept | v1 mechanism | Verdict in v2 |
 |---------|--------------|----------------|
-| **Sandbox** | one git worktree per feature | **Keep.** Still the right isolation primitive. |
+| **Sandbox** | one git worktree per feature | **Keep**, but the orchestrator now creates it itself via shell (no external `create-feature-worktree.sh`); cleanup stays manual. |
 | **Permissioning** | `allowedTools` + `toolsSettings.write.allowedPaths` + `autoApprove` | **Keep the intent, move to adapter.** Scoped write paths and auto-approve policy are portable concepts; the exact keys are Kiro's. |
 | **Context management** | manual `/compact` every 5 round-trips; "fresh invocation" each loop | **Retire as a survival tactic.** Larger context windows + native compaction make this unnecessary. *Keep* fresh-context-per-review where it improves **objectivity** (a reviewer with a clean slate is a feature, not a workaround). |
 | **Message bus** | `state/*.json` + manual schema validation + retry | **Keep the bus; relax the validation.** Reliable tool/structured output makes validate-then-retry mostly redundant; keep a light shape-check at gates. |
