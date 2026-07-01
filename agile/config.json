@@ -1,0 +1,45 @@
+{
+  "$schema": "./config.schema.json",
+  "_comment": "Agile-track config overlay. Merge over ../config.json — every key not listed here (models, severity, deadlock, stack, rollback.mechanism, budget) is inherited unchanged from the root config. Only keys under 'agile' and the requirements-artifact override are new.",
+
+  "feature": {
+    "_comment": "Same fields as root config.feature; backlog replaces the flat requirements file.",
+    "backlogFile": "backlog.json"
+  },
+
+  "agile": {
+    "wipLimit": {
+      "_comment": "Frontier width, not queue depth: max slices simultaneously in_progress or gated across the whole ready frontier. A human-set guardrail, adjusted between runs via LEARNING.md — never auto-tuned at runtime.",
+      "maxConcurrentSlices": 3
+    },
+
+    "gatePolicy": {
+      "routine":      { "blocking": false, "timeoutSeconds": 300, "onTimeout": "proceed" },
+      "novel":        { "blocking": true },
+      "irreversible": { "blocking": true, "requiresFirewallClear": true }
+    },
+
+    "disposability": {
+      "_comment": "Governs rollback economics for slices. See protocol.md §6.",
+      "worktreeCodeIsDisposable": true,
+      "trackReviewDebt": true,
+      "reviewDebtInformsWipLimitOnly": true
+    },
+
+    "sideEffectFirewall": {
+      "_comment": "Default-deny for anything with effects outside the worktree. See protocol.md §6.2.",
+      "allowExternalEffects": false,
+      "exceptions": []
+    },
+
+    "foundationSlice": {
+      "_comment": "A slice is flagged as foundation (priority scheduling + review) when its fan-out (number of dependent slices) meets this threshold.",
+      "fanOutThreshold": 3
+    },
+
+    "requirementRevision": {
+      "_comment": "See protocol.md §8.",
+      "allowLiveBacklogUpdate": true
+    }
+  }
+}

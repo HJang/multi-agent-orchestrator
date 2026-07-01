@@ -14,6 +14,13 @@ It started as a Kiro-CLI-specific design ([solution.md](./solution.md),
 > (agent files + driver scripts) are specified but not yet implemented. The per-CLI sections
 > below describe how each CLI realizes the protocol and how it will be invoked.
 
+> **This workflow is sequential** — one feature, one pass through requirements → design →
+> implementation → review → tests, with bounded fix-loops *within* implementation. For larger
+> or less-certain features, see the **[agile track](./agile/README.md)**, which decomposes a
+> feature into a backlog of small slices scheduled by dependency instead of one linear pass.
+> Both tracks share the same role contracts, state conventions, and CLI adapters — pick per
+> feature, not per project.
+
 ---
 
 ## Document map
@@ -26,6 +33,7 @@ It started as a Kiro-CLI-specific design ([solution.md](./solution.md),
 | [config.json](./config.json) | All tunables — loop caps, models, budget, stack-specific commands |
 | [orchestrator-guide.md](./orchestrator-guide.md) | **Step-by-step: how to create the orchestrator agent** on each CLI |
 | [prompts/orchestrator.md](./prompts/orchestrator.md) | The portable orchestrator system prompt (one block customized per CLI) |
+| [agile/README.md](./agile/README.md) | **Agile track** — a separate execution model: backlog of slices, dependency-graph scheduling, risk-adaptive gates, disposable-rollback economics. Use this instead of the sequential track above for larger/uncertain features. |
 | [solution.md](./solution.md) | **v1** — the original Kiro-specific design + implementation learnings |
 | [task-breakdown.md](./task-breakdown.md) | **v1** — task-by-task implementation plan |
 
